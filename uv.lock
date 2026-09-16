@@ -226,26 +226,28 @@ wheels = [
 ]
 
 [[package]]
-name = "q-cura-api"
+name = "q-digitalpost"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "automation-server-client" },
-    { name = "q-haderslev-vbo" },
-    { name = "requests" },
+    { name = "q-sharepoint-api" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "automation-server-client", git = "https://github.com/odense-rpa/automation-server-client.git?tag=v0.3.0" },
-    { name = "q-haderslev-vbo", git = "https://github.com/haderslev-rpa/q-haderslev-vbo.git?branch=main" },
-    { name = "requests", specifier = ">=2.31.0" },
+    { name = "q-sharepoint-api", git = "https://github.com/haderslev-rpa/q-sharepoint-api.git?branch=main" },
 ]
 
 [[package]]
-name = "q-haderslev-vbo"
-version = "0.1.1"
-source = { git = "https://github.com/haderslev-rpa/q-haderslev-vbo.git?branch=main#e7deb5d46ad1be0f783d7b8ef246af234b563b3c" }
+name = "q-sharepoint-api"
+version = "0.1.0"
+source = { git = "https://github.com/haderslev-rpa/q-sharepoint-api.git?branch=main#3394574246cc4945761321c633f5da8012db65d2" }
+dependencies = [
+    { name = "automation-server-client" },
+    { name = "requests" },
+]
 
 [[package]]
 name = "requests"
