@@ -6,11 +6,13 @@ requires-python = ">=3.13"
 dependencies = [
     "automation-server-client",
     "q-sharepoint-api",
+    "q-serviceplatformen",
 ]
 
 [tool.uv.sources]
 automation-server-client = { git = "https://github.com/odense-rpa/automation-server-client.git", tag = "v0.3.0" }
 q-sharepoint-api = { git = "https://github.com/haderslev-rpa/q-sharepoint-api.git", branch = "main" }
+q-serviceplatformen = { git = "https://github.com/haderslev-rpa/q-serviceplatformen.git", branch = "main" }
 
 [build-system]
 requires = ["hatchling"]
