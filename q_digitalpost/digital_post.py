@@ -19,11 +19,13 @@ from q_sharepoint_api.functionality.sp_documents import (
 
 from q_digitalpost.configuration import (
     DIGITAL_POST_QUEUE_ID,
+    MAX_DIGITAL_POST_TOTAL_SIZE_BYTES,
     MAX_DOCUMENT_SIZE_BYTES,
-    MAX_TOTAL_SIZE_BYTES,
+    MAX_PHYSICAL_POST_TOTAL_SIZE_BYTES,
     SHAREPOINT_LIBRARY_NAME,
     SHAREPOINT_SITE_NAME,
 )
+
 from q_digitalpost.models import (
     DeliveryMethod,
     DigitalPostAddress,
@@ -704,11 +706,24 @@ class DigitalPost:
             for document in documents
         )
 
-        if total_size > MAX_TOTAL_SIZE_BYTES:
+        if (
+            delivery_method
+            == DeliveryMethod.ONLY_DIGITAL_POST
+        ):
+            max_total_size = (
+                MAX_DIGITAL_POST_TOTAL_SIZE_BYTES
+            )
+        else:
+            max_total_size = (
+                MAX_PHYSICAL_POST_TOTAL_SIZE_BYTES
+            )
+
+        if total_size > max_total_size:
             raise ValueError(
                 "Forsendelsens samlede størrelse er "
                 f"{total_size} bytes. Maksimum er "
-                f"{MAX_TOTAL_SIZE_BYTES} bytes."
+                f"{max_total_size} bytes for "
+                f"{delivery_method.value}."
             )
 
         # ----------------------------------------------------
