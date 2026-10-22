@@ -498,7 +498,7 @@ requires-dist = [
 [[package]]
 name = "q-serviceplatformen"
 version = "3.2.0"
-source = { git = "https://github.com/haderslev-rpa/q-serviceplatformen.git?branch=main#ea4931ded3814e92e44324c5bb3e037a5dd1c0cf" }
+source = { git = "https://github.com/haderslev-rpa/q-serviceplatformen.git?branch=main#f4f250c2ebb21fa144800754685a4c27585da706" }
 dependencies = [
     { name = "automation-server-client" },
     { name = "cryptography" },
