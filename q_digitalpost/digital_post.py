@@ -55,6 +55,8 @@ class DigitalPost:
         delivery_method: DeliveryMethod,
         attachments: list[DigitalPostAttachment] | None = None,
         address: DigitalPostAddress | None = None,
+        p_number: str | None = None,
+        production_unit_name: str | None = None,
     ) -> DigitalPostResult:
         """
         Kontrollerer modtageren og opretter eventuelt en
@@ -103,6 +105,21 @@ class DigitalPost:
                 DatafordelerClient
                     .get_aktuel_navn_og_adresse(...)
 
+            p_number:
+                Valgfrit P-nummer for en produktionsenhed.
+
+                P-nummeret skal indeholde præcis 10 cifre og må
+                kun anvendes, når cpr_or_cvr er et CVR-nummer.
+
+                CVR-nummeret er fortsat modtagerens primære ID.
+                P-nummeret gemmes som supplerende information om
+                den konkrete produktionsenhed.
+
+            production_unit_name:
+                Valgfrit navn på produktionsenheden.
+
+                Feltet må kun udfyldes sammen med p_number.
+
         Output:
             DigitalPostResult med status QUEUED, når dokumenterne
             er uploadet til SharePoint og ATS-itemet er oprettet.
@@ -131,6 +148,8 @@ class DigitalPost:
             delivery_method=delivery_method,
             attachments=attachments or [],
             address=address,
+            p_number=p_number,
+            production_unit_name=production_unit_name,
         )
 
         # ----------------------------------------------------
@@ -237,6 +256,9 @@ class DigitalPost:
                     validated["delivery_method"]
                 ),
                 address=validated["address"],
+                production_unit=(
+                    validated["production_unit"]
+                ),
                 documents=uploaded_documents,
                 status_message=status_message,
             )
@@ -450,6 +472,7 @@ class DigitalPost:
         source_item_id: str,
         delivery_method: str,
         address: dict[str, str] | None,
+        production_unit: dict[str, str] | None,
         documents: list[dict[str, Any]],
         status_message: str,
     ) -> dict[str, Any]:
@@ -489,6 +512,18 @@ class DigitalPost:
 
                 Ved DIGITAL_OR_PHYSICAL_POST er værdien en
                 dictionary med den validerede adresse.
+
+            production_unit:
+                Supplerende oplysninger om modtagerens
+                produktionsenhed.
+
+                Værdien er None, når der ikke er angivet et
+                P-nummer.
+
+                Ellers indeholder dictionaryen:
+
+                - p_number
+                - name
 
             documents:
                 Referencer til hoveddokument og eventuelle bilag,
@@ -538,6 +573,11 @@ class DigitalPost:
                 # den validerede modtageradresse.
                 "address": address,
 
+                # Produktionsenhed er None, når der ikke er angivet
+                # P-nummer. Ellers indeholder feltet det validerede
+                # P-nummer og et eventuelt navn.
+                "production_unit": production_unit,
+
                 # Referencer til dokumenter gemt i SharePoint.
                 "documents": documents,
 
@@ -573,6 +613,8 @@ class DigitalPost:
         delivery_method: DeliveryMethod,
         attachments: list[DigitalPostAttachment],
         address: DigitalPostAddress | None,
+        p_number: str | None = None,
+        production_unit_name: str | None = None,
     ) -> dict[str, Any]:
         """
         Validerer hele bestillingen før første SharePoint-upload.
@@ -614,6 +656,16 @@ class DigitalPost:
 
                 DatafordelerClient.get_aktuel_navn_og_adresse(...)
 
+            p_number:
+                Valgfrit P-nummer på 10 cifre.
+
+                P-nummer må kun anvendes sammen med CVR.
+
+            production_unit_name:
+                Valgfrit navn på produktionsenheden.
+
+                Feltet må kun anvendes sammen med p_number.
+
         Output:
             En normaliseret dictionary med:
 
@@ -624,6 +676,7 @@ class DigitalPost:
             - source_item_id
             - delivery_method
             - address
+            - production_unit
             - documents
 
             Funktionen uploader ikke filer og opretter ikke noget
@@ -753,6 +806,55 @@ class DigitalPost:
             )
 
         # ----------------------------------------------------
+        # P-NUMMER OG PRODUKTIONSENHED
+        # ----------------------------------------------------
+        validated_production_unit = None
+
+        if p_number is not None:
+            if not isinstance(p_number, str):
+                raise TypeError(
+                    "p_number skal være tekst eller None."
+                )
+
+            normalized_p_number = re.sub(
+                r"\D",
+                "",
+                p_number,
+            )
+
+            if len(normalized_p_number) != 10:
+                raise ValueError(
+                    "p_number skal indeholde præcis 10 cifre."
+                )
+
+            if recipient_id_type != "CVR":
+                raise ValueError(
+                    "p_number må kun anvendes sammen med "
+                    "et CVR-nummer."
+                )
+
+            validated_production_unit_name = ""
+
+            if production_unit_name is not None:
+                validated_production_unit_name = (
+                    DigitalPost._require_text(
+                        production_unit_name,
+                        "production_unit_name",
+                    )
+                )
+
+            validated_production_unit = {
+                "p_number": normalized_p_number,
+                "name": validated_production_unit_name,
+            }
+
+        elif production_unit_name is not None:
+            raise ValueError(
+                "production_unit_name må kun udfyldes, "
+                "når p_number også er udfyldt."
+            )
+
+        # ----------------------------------------------------
         # ADRESSE
         # ----------------------------------------------------
         validated_address = None
@@ -863,6 +965,7 @@ class DigitalPost:
             ),
             "delivery_method": delivery_method.value,
             "address": validated_address,
+            "production_unit": validated_production_unit,
             "documents": documents,
         }
 
